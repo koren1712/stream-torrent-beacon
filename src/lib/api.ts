@@ -177,6 +177,8 @@ export const api = {
 
   async getTorrentSources(mediaId: number, mediaType: "movie" | "tv", seasonNumber?: number, episodeNumber?: number): Promise<TorrentSource[]> {
     try {
+      console.log(`Fetching torrent sources for ${mediaType} ${mediaId}`, seasonNumber, episodeNumber);
+      
       const { data, error } = await supabase.functions.invoke('torrent-scraper', {
         body: {
           mediaId,
@@ -191,7 +193,12 @@ export const api = {
         return [];
       }
 
-      return data.sources || [];
+      if (!data || !data.sources || !Array.isArray(data.sources)) {
+        console.error("Invalid response format from torrent-scraper", data);
+        return [];
+      }
+
+      return data.sources;
     } catch (error) {
       console.error("Error fetching torrent sources:", error);
       return [];
@@ -200,6 +207,8 @@ export const api = {
 
   async getStreamUrl(source: TorrentSource, mediaType: "movie" | "tv", mediaId: number, title: string): Promise<string> {
     try {
+      console.log(`Generating stream for ${mediaType} ${mediaId} from ${source.provider}`);
+      
       const { data, error } = await supabase.functions.invoke('stream-video', {
         body: {
           provider: source.provider,
@@ -214,6 +223,11 @@ export const api = {
       if (error) {
         console.error("Error generating stream:", error);
         throw new Error("Failed to generate stream URL");
+      }
+
+      if (!data || !data.streamUrl) {
+        console.error("Invalid response format from stream-video", data);
+        throw new Error("Invalid stream response");
       }
 
       return data.streamUrl;
