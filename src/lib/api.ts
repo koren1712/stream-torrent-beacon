@@ -1,4 +1,3 @@
-
 import { MediaItem, Movie, TVShow, Season, Episode, TorrentSource } from "@/types";
 import { createClient } from '@supabase/supabase-js';
 
@@ -176,7 +175,6 @@ export const api = {
     }
   },
 
-  // Updated to use Supabase edge function
   async getTorrentSources(mediaId: number, mediaType: "movie" | "tv", seasonNumber?: number, episodeNumber?: number): Promise<TorrentSource[]> {
     try {
       const { data, error } = await supabase.functions.invoke('torrent-scraper', {
@@ -196,22 +194,10 @@ export const api = {
       return data.sources || [];
     } catch (error) {
       console.error("Error fetching torrent sources:", error);
-      
-      // Fallback to mock data if the edge function fails
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      return Array(4).fill(0).map((_, i) => ({
-        title: mediaType === 'movie' ? `1080p BluRay` : `S${seasonNumber} E${episodeNumber} 1080p WEB-DL`,
-        seeds: 1000 + Math.floor(Math.random() * 2000),
-        url: "#",
-        quality: ["4K", "1080p", "720p", "480p"][i],
-        size: ["12.8 GB", "4.2 GB", "2.1 GB", "950 MB"][i],
-        provider: ["YTS", "RARBG", "1337x", "ThePirateBay"][i]
-      }));
+      return [];
     }
   },
 
-  // New method to get stream URL from source
   async getStreamUrl(source: TorrentSource, mediaType: "movie" | "tv", mediaId: number, title: string): Promise<string> {
     try {
       const { data, error } = await supabase.functions.invoke('stream-video', {
@@ -220,25 +206,23 @@ export const api = {
           quality: source.quality,
           mediaType,
           mediaId,
-          title
+          title,
+          url: source.url
         }
       });
 
       if (error) {
         console.error("Error generating stream:", error);
-        // Fallback to sample video
-        return "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+        throw new Error("Failed to generate stream URL");
       }
 
       return data.streamUrl;
     } catch (error) {
       console.error("Error generating stream:", error);
-      // Fallback to sample video
-      return "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+      throw new Error("Failed to generate stream URL");
     }
   },
 
-  // Helper functions for image URLs
   getPosterUrl(path: string | null, size: string = "w500"): string {
     if (!path) return "/placeholder.svg";
     return `${TMDB_IMAGE_URL}/${size}${path}`;
