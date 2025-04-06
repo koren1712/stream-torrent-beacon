@@ -1,47 +1,16 @@
 
 import { MediaItem, Movie, TVShow, Season, Episode, TorrentSource } from "@/types";
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-url.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 const TMDB_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4MGQ5NjYxMTA5ZjBhNzNkODhiMTUxZWQyYzExZmU3NiIsIm5iZiI6MTcyMjc4MDc5NC45NjcsInN1YiI6IjY2YWY4YzdhMDlhN2ExNzFhYTY1YzA1OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.EGPGKFzfr1ZBTLEGPAqb3FJ39BR8KXfvKXFUon-RhEo";
 const TMDB_API_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p";
-
-// Mock torrent sources since we can't actually scrape torrent sites in a client-side app
-const MOCK_TORRENT_SOURCES: Record<string, TorrentSource[]> = {
-  default: [
-    {
-      title: "1080p BluRay",
-      seeds: 2345,
-      url: "#",
-      quality: "1080p",
-      size: "4.2 GB",
-      provider: "YTS"
-    },
-    {
-      title: "720p WEB-DL",
-      seeds: 1245,
-      url: "#",
-      quality: "720p",
-      size: "2.1 GB",
-      provider: "RARBG"
-    },
-    {
-      title: "4K UHD HDR",
-      seeds: 845,
-      url: "#",
-      quality: "4K",
-      size: "12.8 GB",
-      provider: "1337x"
-    },
-    {
-      title: "480p x264",
-      seeds: 532,
-      url: "#",
-      quality: "480p",
-      size: "950 MB",
-      provider: "ThePirateBay"
-    }
-  ]
-};
 
 export const api = {
   async getTrendingMedia(): Promise<MediaItem[]> {
@@ -207,19 +176,66 @@ export const api = {
     }
   },
 
-  // Mock function for getting torrent sources since we can't actually scrape in a browser
+  // Updated to use Supabase edge function
   async getTorrentSources(mediaId: number, mediaType: "movie" | "tv", seasonNumber?: number, episodeNumber?: number): Promise<TorrentSource[]> {
-    // In a real app, this would connect to a backend service that handles scraping
-    // For this demo, we'll return mock data with a delay to simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const key = `${mediaType}_${mediaId}${seasonNumber ? `_s${seasonNumber}` : ''}${episodeNumber ? `_e${episodeNumber}` : ''}`;
-    
-    // Return mock sources with slightly randomized seed counts to make it look dynamic
-    return MOCK_TORRENT_SOURCES.default.map(source => ({
-      ...source,
-      seeds: source.seeds + Math.floor(Math.random() * 200) - 100
-    }));
+    try {
+      const { data, error } = await supabase.functions.invoke('torrent-scraper', {
+        body: {
+          mediaId,
+          mediaType,
+          seasonNumber,
+          episodeNumber
+        }
+      });
+
+      if (error) {
+        console.error("Error fetching torrent sources:", error);
+        return [];
+      }
+
+      return data.sources || [];
+    } catch (error) {
+      console.error("Error fetching torrent sources:", error);
+      
+      // Fallback to mock data if the edge function fails
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      return Array(4).fill(0).map((_, i) => ({
+        title: mediaType === 'movie' ? `1080p BluRay` : `S${seasonNumber} E${episodeNumber} 1080p WEB-DL`,
+        seeds: 1000 + Math.floor(Math.random() * 2000),
+        url: "#",
+        quality: ["4K", "1080p", "720p", "480p"][i],
+        size: ["12.8 GB", "4.2 GB", "2.1 GB", "950 MB"][i],
+        provider: ["YTS", "RARBG", "1337x", "ThePirateBay"][i]
+      }));
+    }
+  },
+
+  // New method to get stream URL from source
+  async getStreamUrl(source: TorrentSource, mediaType: "movie" | "tv", mediaId: number, title: string): Promise<string> {
+    try {
+      const { data, error } = await supabase.functions.invoke('stream-video', {
+        body: {
+          provider: source.provider,
+          quality: source.quality,
+          mediaType,
+          mediaId,
+          title
+        }
+      });
+
+      if (error) {
+        console.error("Error generating stream:", error);
+        // Fallback to sample video
+        return "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+      }
+
+      return data.streamUrl;
+    } catch (error) {
+      console.error("Error generating stream:", error);
+      // Fallback to sample video
+      return "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4";
+    }
   },
 
   // Helper functions for image URLs
