@@ -166,10 +166,15 @@ const TVDetails = () => {
               <div id="player-section" className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">Now Playing</h2>
                 <VideoPlayer
+<<<<<<< HEAD
                   title={`${tvShow.name} S${selectedSeason}E${selectedEpisode}`}
                   source={selectedSource}
                   mediaType="tv"
                   mediaId={tvId}
+=======
+                  title={`${tvShow.name} S${selectedSeason}E${selectedEpisode} (${selectedSource.quality})`}
+                  source={selectedSource.provider}
+>>>>>>> f233d878d245d5ed6f02951a3a51afa377c5bb4c
                 />
               </div>
             )}

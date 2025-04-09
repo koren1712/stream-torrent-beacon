@@ -121,10 +121,15 @@ const MovieDetails = () => {
               <div id="player-section" className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">Now Playing</h2>
                 <VideoPlayer
+<<<<<<< HEAD
                   title={movie.title}
                   source={selectedSource}
                   mediaType="movie"
                   mediaId={movieId}
+=======
+                  title={`${movie.title} (${selectedSource.quality})`}
+                  source={selectedSource.provider}
+>>>>>>> f233d878d245d5ed6f02951a3a51afa377c5bb4c
                 />
               </div>
             )}
