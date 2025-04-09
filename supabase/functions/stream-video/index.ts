@@ -26,18 +26,27 @@ async function getDebridStreamUrl(magnetUrl: string): Promise<string> {
 
   console.log("Attempting to resolve magnet link with Debrid service:", magnetUrl.substring(0, 60) + '...');
 
-  // Since we don't have actual Debrid integration, we'll simulate it by deriving a stream URL from the magnet hash
-  const magnetHash = extractMagnetHash(magnetUrl);
-  if (!magnetHash) {
-    throw new Error("Could not extract hash from magnet link");
+  try {
+    // In a production implementation, this would call a real debrid API
+    // For now, we'll simulate the API call with a delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    // Extract hash from magnet link
+    const magnetHash = extractMagnetHash(magnetUrl);
+    if (!magnetHash) {
+      throw new Error("Could not extract hash from magnet link");
+    }
+    
+    // For demo purposes, we'll create a deterministic mock URL based on the magnet hash
+    // In a real implementation, this would be replaced with actual API calls to a debrid service
+    const mockStreamUrl = `https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4?magnet=${magnetHash}`;
+    
+    console.log("Successfully created stream URL from magnet hash:", mockStreamUrl);
+    return mockStreamUrl;
+  } catch (error) {
+    console.error("Error in debrid service:", error);
+    throw error;
   }
-  
-  // For demo purposes, we'll create a deterministic mock URL based on the magnet hash
-  // In a real implementation, this would be replaced with actual API calls to a debrid service
-  const mockStreamUrl = `https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4?magnet=${magnetHash}`;
-  
-  console.log("Successfully created stream URL from magnet hash:", mockStreamUrl);
-  return mockStreamUrl;
 }
 
 serve(async (req) => {
