@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Stream Torrent Beacon - Browse and stream movies and TV shows directly in your browser" />
+    <meta name="theme-color" content="#18181b" />
+    
+    <!-- Security policies to enable needed functionality -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self'; 
+      script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline' 'unsafe-eval'; 
+      connect-src 'self' https://api.themoviedb.org https://image.tmdb.org ws: wss: blob: *; 
+      img-src 'self' https://image.tmdb.org data: blob: *;
+      media-src 'self' blob: *;
+      style-src 'self' 'unsafe-inline';
+      worker-src 'self' blob:;
+    ">
+    
+    <title>Stream Torrent Beacon</title>
+    
+    <!-- Preload critical WebTorrent script -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/webtorrent@1.9.7/webtorrent.min.js" as="script" />
+    
+    <!-- Load WebTorrent directly from CDN with crossorigin and integrity for better security -->
+    <script 
+      src="https://cdn.jsdelivr.net/npm/webtorrent@1.9.7/webtorrent.min.js" 
+      defer 
+      crossorigin="anonymous"
+    ></script>
+    
+    <!-- Fallback script in case the CDN version fails -->
+    <script>
+      window.addEventListener('DOMContentLoaded', function() {
+        // Check if WebTorrent loaded after a short delay
+        setTimeout(function() {
+          if (!window.WebTorrent) {
+            console.warn('WebTorrent failed to load from CDN, using fallback');
+            var script = document.createElement('script');
+            script.src = '/webtorrent.min.js'; // Local fallback
+            script.defer = true;
+            document.head.appendChild(script);
+          } else {
+            console.log('WebTorrent loaded successfully from CDN');
+          }
+        }, 1000);
+      });
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html> 
