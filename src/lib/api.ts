@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 import { MediaItem, Movie, TVShow, Season, Episode, TorrentSource } from "@/types";
 import { createClient } from '@supabase/supabase-js';
 import { toast } from "sonner";
@@ -8,20 +8,15 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
 
 // DEBUG LOG:
-// console.log("Supabase URL from env:", import.meta.env.VITE_SUPABASE_URL);
-// console.log("Supabase Anon Key from env:", import.meta.env.VITE_SUPABASE_ANON_KEY);
+console.log("Supabase URL from env:", import.meta.env.VITE_SUPABASE_URL);
+console.log("Supabase Anon Key from env:", import.meta.env.VITE_SUPABASE_ANON_KEY);
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-=======
-
-import { MediaItem, Movie, TVShow, Season, Episode, TorrentSource } from "@/types";
->>>>>>> f233d878d245d5ed6f02951a3a51afa377c5bb4c
 
 const TMDB_API_KEY = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4MGQ5NjYxMTA5ZjBhNzNkODhiMTUxZWQyYzExZmU3NiIsIm5iZiI6MTcyMjc4MDc5NC45NjcsInN1YiI6IjY2YWY4YzdhMDlhN2ExNzFhYTY1YzA1OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.EGPGKFzfr1ZBTLEGPAqb3FJ39BR8KXfvKXFUon-RhEo";
 const TMDB_API_URL = "https://api.themoviedb.org/3";
 const TMDB_IMAGE_URL = "https://image.tmdb.org/t/p";
 
-<<<<<<< HEAD
 // Generate fallback sources for when API calls fail
 function generateFallbackSources(title: string): TorrentSource[] {
   console.log("Generating fallback sources for:", title);
@@ -60,45 +55,6 @@ function generateFallbackSources(title: string): TorrentSource[] {
   
   return sources;
 }
-=======
-// Mock torrent sources since we can't actually scrape torrent sites in a client-side app
-const MOCK_TORRENT_SOURCES: Record<string, TorrentSource[]> = {
-  default: [
-    {
-      title: "1080p BluRay",
-      seeds: 2345,
-      url: "#",
-      quality: "1080p",
-      size: "4.2 GB",
-      provider: "YTS"
-    },
-    {
-      title: "720p WEB-DL",
-      seeds: 1245,
-      url: "#",
-      quality: "720p",
-      size: "2.1 GB",
-      provider: "RARBG"
-    },
-    {
-      title: "4K UHD HDR",
-      seeds: 845,
-      url: "#",
-      quality: "4K",
-      size: "12.8 GB",
-      provider: "1337x"
-    },
-    {
-      title: "480p x264",
-      seeds: 532,
-      url: "#",
-      quality: "480p",
-      size: "950 MB",
-      provider: "ThePirateBay"
-    }
-  ]
-};
->>>>>>> f233d878d245d5ed6f02951a3a51afa377c5bb4c
 
 export const api = {
   async getTrendingMedia(): Promise<MediaItem[]> {
@@ -264,7 +220,6 @@ export const api = {
     }
   },
 
-<<<<<<< HEAD
   async getTorrentSources(mediaId: number, mediaType: "movie" | "tv", seasonNumber?: number, episodeNumber?: number): Promise<TorrentSource[]> {
     try {
       console.log(`Fetching torrent sources for ${mediaType} ${mediaId}`, seasonNumber, episodeNumber);
@@ -282,13 +237,13 @@ export const api = {
         if (error) {
           console.error("Error fetching torrent sources:", error);
           toast.error("Error fetching torrent sources. Using fallback data.");
-          return generateFallbackSources(`${mediaType} ${mediaId}`);
+          return generateFallbackSources(`${mediaType} ${mediaId} ${seasonNumber ? `S${seasonNumber}` : ''}${episodeNumber ? `E${episodeNumber}` : ''}`);
         }
 
         if (!data || !data.sources || !Array.isArray(data.sources)) {
           console.error("Invalid response format from torrent-scraper", data);
           toast.error("Invalid response from torrent scraper. Using fallback data.");
-          return generateFallbackSources(`${mediaType} ${mediaId}`);
+          return generateFallbackSources(`${mediaType} ${mediaId} ${seasonNumber ? `S${seasonNumber}` : ''}${episodeNumber ? `E${episodeNumber}` : ''}`);
         }
 
         // Make sure every source has a valid magnet URL
@@ -299,7 +254,7 @@ export const api = {
         if (validSources.length === 0) {
           console.warn("No valid magnet links found in response");
           toast.warning("No valid torrent sources found. Using fallback data.");
-          return generateFallbackSources(`${mediaType} ${mediaId}`);
+          return generateFallbackSources(`${mediaType} ${mediaId} ${seasonNumber ? `S${seasonNumber}` : ''}${episodeNumber ? `E${episodeNumber}` : ''}`);
         }
 
         console.log(`Found ${validSources.length} valid torrent sources`);
@@ -316,12 +271,12 @@ export const api = {
       } catch (error) {
         console.error("Error invoking torrent-scraper function:", error);
         toast.error("Error connecting to torrent scraper. Using fallback data.");
-        return generateFallbackSources(`${mediaType} ${mediaId}`);
+        return generateFallbackSources(`${mediaType} ${mediaId} ${seasonNumber ? `S${seasonNumber}` : ''}${episodeNumber ? `E${episodeNumber}` : ''}`);
       }
     } catch (error) {
       console.error("Error fetching torrent sources:", error);
       toast.error("Error fetching torrent sources. Using fallback data.");
-      return generateFallbackSources(`${mediaType} ${mediaId}`);
+      return generateFallbackSources(`${mediaType} ${mediaId} ${seasonNumber ? `S${seasonNumber}` : ''}${episodeNumber ? `E${episodeNumber}` : ''}`);
     }
   },
 
@@ -351,16 +306,19 @@ export const api = {
 
         if (error) {
           console.error("Error generating stream:", error);
+          toast.error(`Error generating stream: ${error.message}. Using fallback video.`);
           const randomIndex = Math.floor(Math.random() * sampleVideos.length);
           return sampleVideos[randomIndex];
         }
 
         if (!data || !data.streamUrl) {
           console.error("Invalid response format from stream-video", data);
+          toast.error("Invalid response from stream service. Using fallback video.");
           const randomIndex = Math.floor(Math.random() * sampleVideos.length);
           return sampleVideos[randomIndex];
         }
 
+        console.log("Stream URL obtained successfully:", data.streamUrl.substring(0, 60) + '...');
         return data.streamUrl;
       } catch (error) {
         console.error("Error invoking stream-video function:", error);
@@ -381,24 +339,6 @@ export const api = {
     }
   },
 
-=======
-  // Mock function for getting torrent sources since we can't actually scrape in a browser
-  async getTorrentSources(mediaId: number, mediaType: "movie" | "tv", seasonNumber?: number, episodeNumber?: number): Promise<TorrentSource[]> {
-    // In a real app, this would connect to a backend service that handles scraping
-    // For this demo, we'll return mock data with a delay to simulate API call
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    const key = `${mediaType}_${mediaId}${seasonNumber ? `_s${seasonNumber}` : ''}${episodeNumber ? `_e${episodeNumber}` : ''}`;
-    
-    // Return mock sources with slightly randomized seed counts to make it look dynamic
-    return MOCK_TORRENT_SOURCES.default.map(source => ({
-      ...source,
-      seeds: source.seeds + Math.floor(Math.random() * 200) - 100
-    }));
-  },
-
-  // Helper functions for image URLs
->>>>>>> f233d878d245d5ed6f02951a3a51afa377c5bb4c
   getPosterUrl(path: string | null, size: string = "w500"): string {
     if (!path) return "/placeholder.svg";
     return `${TMDB_IMAGE_URL}/${size}${path}`;
